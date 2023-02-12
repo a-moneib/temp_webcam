@@ -1,34 +1,107 @@
-<!--Doc Scanner Component-->
-<ngx-doc-scanner *ngIf="image"
-                 [file]="image"
-                 (editResult)="editResult($event)"
-                 (exitEditor)="exitEditor()"
-                 (error)="onError($event)"
-                 (processing)="editorState($event)"
-                 [config]="config">
-</ngx-doc-scanner>
-
-<!--Drop Zone & File Input-->
-<div fxFlex="100" fxLayoutAlign="space-around" style="height: 80vh">
-  <div #dropZone
-       class="dropZone"
-       [ngClass]="{'drop-hover': overZone}"
-       (drop)="$event.preventDefault(); dropFile($event)"
-       (dragleave)="$event.preventDefault(); overZone = false;"
-       (dragover)="$event.preventDefault(); overZone = true;"
-       (click)="hiddenInput.click()">
-    <div fxLayout="column" fxFlex="100"  fxLayoutAlign="space-around" style="text-align: center">
-      <span class="inner-text" style="margin-top: auto; text-align: center">Drop an image here, or click to upload</span>
-      <mat-icon color="primary" class="cloud-icon" style="margin-bottom:auto; margin-top: 12px; font-size: 64px;">cloud_upload</mat-icon>
+<div style="text-align: center">
+  <div
+    style="
+      position: absolute;
+      margin-left: auto;
+      width: 100%;
+      z-index: 10;
+      text-shadow: 1px 1px 1px black;
+      color: white;
+    "
+  >
+    <h2>
+      {{ titleText }}
+    </h2>
+  </div>
+  <div *ngIf="generateOcr">
+    <button
+      style="
+        margin-top: 10%;
+        padding: 2vmin;
+        background-color: black;
+        color: white;
+        border: 2px solid white;
+      "
+      (click)="generateResults()"
+    >
+      Generate OCR
+    </button>
+    <div style="border: 1px solid black" *ngIf="results">
+      <h4 *ngFor="let line of results">{{ line }}</h4>
     </div>
   </div>
-</div>
-<input #hiddenInput type="file" (change)="loadFile($event)" style="display:none" accept="image/*">
+  <!--Doc Scanner Component-->
+  <ngx-doc-scanner
+    *ngIf="image && !generateOcr"
+    [file]="image"
+    [face]="face"
+    (editResult)="editResult($event)"
+    (exitEditor)="exitEditor()"
+    (error)="onError($event)"
+    (processing)="editorState($event)"
+    [config]="config"
+  >
+  </ngx-doc-scanner>
 
-<!--Loading Indicator-->
-<div style="width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.16); position: fixed; top: 0; left: 0; z-index: 100"
-     *ngIf="processing && this.image"
-     fxFlex="100"
-     fxLayoutAlign="space-around">
-  <mat-spinner style="z-index: 500; margin: auto; width: 100px"></mat-spinner>
+  <div
+    *ngIf="isCameraExist && !generateOcr; else noCameraExist"
+    style="text-align: center"
+  >
+    <div class="wrapper" (window:resize)="onResize($event)">
+      <div class="clip" *ngIf="!image && showWebcam">
+        <div class="rect_front" *ngIf="titleText === 'Front Side'"></div>
+        <div class="rect_back" *ngIf="titleText === 'Back Side'"></div>
+        <webcam
+          [width]="width"
+          [height]="height"
+          [trigger]="triggerObservable"
+          (imageCapture)="handleImage($event)"
+          [mirrorImage]="mirrorImage"
+          [allowCameraSwitch]="allowCameraSwitch"
+          [switchCamera]="nextWebcamObservable"
+          [videoOptions]="videoOptions"
+          [imageQuality]="1"
+          (cameraSwitched)="cameraWasSwitched($event)"
+          (initError)="handleInitError($event)"
+        >
+        </webcam>
+      </div>
+      <button
+        (click)="takeSnapshot()"
+        *ngIf="!image && showWebcam"
+        style="
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          bottom: 0;
+          margin-bottom: 4vmin !important;
+          z-index: 8;
+          border-radius: 50%;
+          border: 2px solid whitesmoke;
+          z-index: 1000;
+
+          background-color: darkred;
+        "
+      ></button>
+    </div>
+
+    <!--Loading Indicator-->
+    <div
+      style="
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.365);
+        position: fixed;
+        top: 0;
+        left: 0;
+      "
+      *ngIf="processing && this.image"
+      fxFlex="100"
+      fxLayoutAlign="space-around"
+    >
+      <mat-spinner
+        style="z-index: 500; margin: auto; width: 100px"
+      ></mat-spinner>
+    </div>
+  </div>
 </div>
